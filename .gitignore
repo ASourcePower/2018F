@@ -98,4 +98,5 @@ celerybeat-schedule
 
 # ignore folder
 .idea/
-ivscode/
+.DS_Store
+.vscode/
