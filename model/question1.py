@@ -1,12 +1,13 @@
+# 导入程序所需要的包
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
 # 下面这三行代码是为了画图可以显示中文
 from pylab import *
-
 mpl.rcParams['font.sans-serif'] = ['SimHei']
 mpl.rcParams['axes.unicode_minus'] = False
+
 
 
 def type_is_same(puck_type, airport_type):
@@ -21,10 +22,12 @@ def type_is_same(puck_type, airport_type):
 def classify_airport(all_airports):
     # airport 是所有的登机口
     # classes: 字典用于存储每种类别的登机口
+	# 第一问我们将登机口按照到达类型，出发类型，允许降落的飞机类型分类
     classes = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [],
                9: [], 10: [], 11: [], 12: [], 13: [], 14: [], 15: [], 16: [], 17: []}
 
     for airport in all_airports:
+		# 登机口的飞机类型为窄体机
         if airport['body_type'] == 'N':
             if airport['a_type'] == 'D':
                 if airport['d_type'] == 'D':
@@ -140,7 +143,10 @@ def create_pucks(pucks):
 
 
 def plane_type_map(plane_type):
+	# 本函数的功能是将飞机专场记录中的飞机型号转换为飞机类型
+	# 宽体积的飞机类型
     Wide_body = ['332', '333', '33E', '33H', '33L', '773']
+	#窄体机的飞机类型
     Narrow_body = ['319', '320', '321', '323', '325', '738', '73A', '73E', '73H', '73L']
     plane_type = str(plane_type)
     if (plane_type in Wide_body):
@@ -161,14 +167,17 @@ def sort_pucks(puck_class):
 
 
 def greedyselector(sort_puck_class, airport):
+	# 该函数的功能是采用贪心算法分配航班到登机口
     # sort_puck_class: 排序好的转场记录，列表形式
-    # airport: 一个登机口类实例
+    # airport: 一个登机口
     if airport['assign_flag'] == False:  # 登机口没有被分配
         start_times = [puck['arrive_time'] for puck in sort_puck_class]
         depart_times = [puck['depart_time'] for puck in sort_puck_class]
-        j = 0
+        j = 0    # 在输入的航班中，出发时间最早的航班下标
         while (sort_puck_class[j]['airport'] != ''):
+		# 此while循环找到输入的所有航班中第一个没有被分配的航班下标
             j = j + 1
+		# 将没有分配的航班分配给登机口
         sort_puck_class[j]['airport'] = airport['gate']
         airport['puck_records'].append(sort_puck_class[j]['record'])
         k = j
@@ -185,22 +194,35 @@ def greedyselector(sort_puck_class, airport):
 
 
 def greedyselector1(sort_puck_class, airport):
+	# 该函数的功能是采用贪心算法分配航班到登机口
     # sort_puck_class: 排序好的转场记录，列表形式
-    # airport: 一个登机口类实例
+    # airport: 一个登机口
+	# airport['busy_time']表示该登机口的被占用时间，初始化为所有元素均为0的数组
+	# 数组长度为288，我们将一天24小时按照5分钟分段，一共有288段。0表示该段时间没有被
+	# 占用，1表示该段时间被占用了。比如，如果一个登机口0:00-1:00之间被航班占用，那么该
+	# 登机口的'busy_time'前12个元素为1
+	
+	
     start_times = [puck['arrive_time'] for puck in sort_puck_class]
     depart_times = [puck['depart_time'] for puck in sort_puck_class]
 
     j = 0
     while (sort_puck_class[j]['airport'] != ''):
+	# 此while循环找到输入的所有航班中第一个没有被分配的航班下标
         j = j + 1
 
     if airport['assign_flag'] == False:  # 登机口没有被分配
+		# 登机口被占用时间，初始化为空闲，24小时一共有288个5min段
         airport['busy_time'] = np.zeros(288)
-        sp_ind = max(int(start_times[j] / 5) - 1, 0)
+		if start_times[j]==0:
+			sp_ind = 0
+		else:
+			sp_ind = int(start_times[j] / 5) - 1
         ep_ind = int(depart_times[j] / 5)
+		# 将没有分配的第j个航班分配给登机口
         sort_puck_class[j]['airport'] = airport['gate']
         airport['puck_records'].append(sort_puck_class[j]['record'])
-        airport['busy_time'][sp_ind:ep_ind] = 1
+        airport['busy_time'][sp_ind:ep_ind] = 1   # 将航班占用的时间段标记为繁忙（1）
 
         k = j
         for i in range(j + 1, len(sort_puck_class)):
@@ -226,11 +248,12 @@ def greedyselector1(sort_puck_class, airport):
                     sort_puck_class[i]['airport'] = airport['gate']
                     airport['puck_records'].append(sort_puck_class[k]['record'])
 
-    print('gates{} is {}'.format(airport['gate'], airport['puck_records']))
+    print('gates{} has assigned {}'.format(airport['gate'], airport['puck_records']))
     return sort_puck_class, airport
 
 
 def assign_puck(puck_class, gate_class):
+	# 该函数的功能是分配航班到登机口
     if len(puck_class) == 0 or len(gate_class) == 0:
         return puck_class, gate_class
     sort_puck_class = sort_pucks(puck_class)
@@ -253,6 +276,7 @@ def assign_puck(puck_class, gate_class):
         return sort_puck_class, gate_class
 
 
+# 读取文件
 gates = pd.read_csv('../data/gates (1).csv')
 new_gates = gates[['登机口', '终端厅', '区域', '到达类型', '出发类型', '机体类别']]
 
@@ -261,24 +285,32 @@ cols = ['飞机转场记录号', '到达相对时间min', '到达航班', '到�
         '飞机型号', '出发相对时间min', '出发航班', '出发类型']
 puck_data = puck_data[cols]
 
+# 创建登机口列表和专场航班记录列表，每个元素为一个登机口或者航班，类型为字典类型
 airports = create_gates(new_gates)
 allpucks = create_pucks(puck_data)
 
+# 将登机口和转场记录航班分类
 puck_classes = classify_puck(allpucks)
 gate_classes = classify_airport(airports)
 
+# 出发类型和到达类型均为单类型的登机口类别在gate_classes的下标
 single_type_gate = [0, 1, 3, 4, 9, 10, 12, 13]
+# 出发类型或到达类型至少有一个为国内和国际的登机口类别在gate_classes的下标
 multi_type_gate = [2, 5, 6, 7, 8, 11, 14, 15, 16, 17]
 single_gate_classes = [gate_classes[code] for code in single_type_gate]
 multi_gate_classes = [gate_classes[code] for code in multi_type_gate]
 
+# 用于存储登机口和转场记录被分配的情况
 assign_pucks = [];
 assign_gates = []
+
+# 先将所有类别的转场记录按照贪心算法分配到对应的单类型登机口
 for i in range(len(puck_classes)):
     as_puck, as_gate = assign_puck(puck_classes[i], single_gate_classes[i])
     assign_pucks.append(as_puck)
     assign_gates.append(as_gate)
 
+# 将更新后的飞机转场记录分配到多类型登机口
 for j in range(len(multi_type_gate)):
     print(len(multi_gate_classes[j]))
     for k in range(len(puck_classes)):
@@ -293,13 +325,14 @@ for j in range(len(multi_type_gate)):
     print('=================================')
     assign_gates.append(multi_gate_classes[j])
 
+# assign_gates记录了所有的登机口分配的情况
 assign_gates = [assign_gates[i] for i in range(len(assign_gates)) if len(assign_gates[i]) > 0]
 
-gate_sum = 0
-puck_sum = 0
+gate_sum = 0  # 计数被分配的登机口数量
+puck_sum = 0  # 计数被分配的转场飞机记录数量
 
-final_assign_pucks = []
-final_assign_gates = []
+final_assign_pucks = []   # 记录最终被分配到每个登机口的转场记录
+final_assign_gates = []   # 记录使用的登机口
 
 for i in range(len(assign_gates)):
     for j in range(len(assign_gates[i])):
@@ -311,6 +344,7 @@ for i in range(len(assign_gates)):
             final_assign_gates.append(assign_gates[i][j]['gate'])
             final_assign_pucks.append(assign_gates[i][j]['puck_records'])
 
+# 将使用的登机口与该登机口分配的转场飞机记录对应起来，存储成一个字典
 assign_dict = dict(zip(final_assign_gates, final_assign_pucks))
 
 # 从字典写入csv文件
@@ -323,7 +357,7 @@ csvFile3.close()
 
 ###################### 画图 ##################
 
-num_assign_pucks = [len(pucks) for pucks in final_assign_pucks]
+num_assign_pucks = [len(pucks) for pucks in final_assign_pucks]  # 每个登机口分配的飞机转场记录数量
 assign_dict = dict(zip(final_assign_gates, final_assign_pucks))
 assign_dict1 = dict(zip(final_assign_gates, num_assign_pucks))
 assigns = pd.DataFrame(assign_dict1, index=[0])

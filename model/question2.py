@@ -116,13 +116,15 @@ def sort_pucks(puck_class):
 
 
 def greedyselector2(sort_puck_class, airport):
-    # sort_puck_class: 排序好的转场记录，列表形式
+    # 本函数采用贪心算法进行分配航班到登机口
+	# sort_puck_class: 排序好的转场记录，列表形式，以转场记录起飞时间从早到晚排序
     # airport: 一个登机口类实例
     start_times = [puck['arrive_time'] for puck in sort_puck_class]
     depart_times = [puck['depart_time'] for puck in sort_puck_class]
 
     j = 0
     while (sort_puck_class[j]['airport'] != ''):
+	# 该循环寻找第一个没有被分配的转场记录
         j = j + 1
 
     if airport['assign_flag'] == False:  # 登机口没有被分配
@@ -144,7 +146,7 @@ def greedyselector2(sort_puck_class, airport):
                 # 飞机到达的类型与出发类型和登机口类型均吻合
                 if (type_is_same(sort_puck_class[i]['a_type'], airport['a_type']) &
                         (type_is_same(sort_puck_class[i]['d_type'], airport['d_type']))):
-
+						
                     if start_times[i] >= depart_times[k]:
                         if sort_puck_class[i]['airport'] == '':  # 如果该转场记录没有被分配
                             sort_puck_class[i]['airport'] = airport['gate']
@@ -184,9 +186,11 @@ def greedyselector2(sort_puck_class, airport):
 
 
 def assign_puck2(puck_class, gate_class):
+	# 该函数是分配登机口和转场记录
     if len(puck_class) == 0 or len(gate_class) == 0:
+		# 如果该类别的登机口数量为0或者该类别的飞机转场记录数量为0
         return puck_class, gate_class
-    sort_puck_class = sort_pucks(puck_class)
+    sort_puck_class = sort_pucks(puck_class) # 将飞机转场记录按照起飞时间排序
 
     for i in range(len(gate_class)):
         puck_not_assign = [puck for puck in sort_puck_class if puck['airport'] == '']
