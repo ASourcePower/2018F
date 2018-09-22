@@ -1,0 +1,28 @@
+登机口和飞机转场记录的数据结构
+
+gate_data：包含了一个登机口的所有信息
+登机口的数据结构，以字典形式存储
+gate = {'gate': gate_data['登机口'], 
+            'terminal': gate_data['终端厅'], 
+             'region': gate_data['区域'],
+             'a_type': gate_data['到达类型'],
+             'd_type': gate_data['出发类型'], 
+             'body_type': gate_data['机体类别'], 
+             'puck_records': [],    # 该登机口分配的转场飞机记录列表
+             'assign_flag': False   # 是否已经被分配
+	}  
+        
+
+转场飞机记录的数据结构，以字典形式存储
+puck_data包含了一个转场飞机记录所有的信息		
+puck = {'record': puck_data['飞机转场记录号'], 
+             'arrive_time': puck_data['到达相对时间min'], 
+             'a_flight': puck_data['到达航班'],
+             'a_type': puck_data['到达类型'],
+             'plane_type': puck_data['飞机型号'], 
+             'depart_time': puck_data['出发相对时间min'], 
+             'de_flight': puck_data['出发航班'],
+             'd_type': puck_data['出发类型'],  
+             'airport': '',   # 字符串类型，记录该飞机被分配到的登机口
+	}
+
